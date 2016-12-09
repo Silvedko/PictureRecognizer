@@ -19,7 +19,7 @@ public class GameManager : MonoBehaviour
 	Sprite wrongAnswerSprite;
 
 	[SerializeField]
-	Image answerPopupImage;
+	AnswerPopup popup;
 	#endregion
 
 	[SerializeField]
@@ -36,15 +36,16 @@ public class GameManager : MonoBehaviour
 	int timeForCurrentGesture = 0;
 	LineRenderer lineRenderer;
 
-	public void OnButtonQuitClicked ()
+	public void OnButtonRetryClicked ()
 	{
-		Application.Quit ();
+		UnityEngine.SceneManagement.SceneManager.LoadScene (0, UnityEngine.SceneManagement.LoadSceneMode.Single); //Application.Quit ();
 	}
 
-	private void Start ()
+	void OnSceneWasLoaded ()
 	{
 		buttonQuit.SetActive (false);
 		stopUserDrawing = false;
+
 		GestrureDrawer.OnUserDrawedGesture += delegate(List<Vector2> points) {
 			RecognizeGesture (points);
 		};
@@ -55,6 +56,11 @@ public class GameManager : MonoBehaviour
 		timeForCurrentGesture = sampleGestures.Length;
 
 		StartCoroutine (NextGestureWithDelay (0));
+	}
+
+	private void Start ()
+	{
+		OnSceneWasLoaded ();
 	}
 
 
@@ -102,7 +108,6 @@ public class GameManager : MonoBehaviour
 	/// <returns>The sample gestures from XM.</returns>
 	private Gesture[] LoadSampleGesturesFromXML ()
 	{
-		//loadedGestureNames = new List<string> ();
 		List<Gesture> gestures = new List<Gesture>();
 		var assets_temp = Resources.LoadAll ("GestureSet\\NewGestures");
 
@@ -119,7 +124,7 @@ public class GameManager : MonoBehaviour
 
 	private void NextGesture ()
 	{
-		StartCoroutine (NextGestureWithDelay (0.5f));
+		StartCoroutine (NextGestureWithDelay (delayBetweenRounds));
 	}
 
 	private IEnumerator NextGestureWithDelay (float delay)
@@ -153,42 +158,18 @@ public class GameManager : MonoBehaviour
 		timer.StopTimer ();
 		timer.EnableTimer (false);
 
-		if (userGestureName == sampleGestures[currentGestureIndex].Name)
-			CorrectAnswer ();
+		if (userGestureName == sampleGestures [currentGestureIndex].Name)
+		{
+			popup.ShowPopup (correctAnswerSprite);
+			score++;
+		} 
 		else
-			WrongAnswer ();
-		
+		{
+			popup.ShowPopup (wrongAnswerSprite);
+		}
+			
+		popup.HidePopupWithDelay (delayBetweenRounds);
 		NextGesture ();
-	}
-
-	private void CorrectAnswer ()
-	{
-		ShowAnswerPopup (true);
-
-		score ++;
-	}
-
-	private void WrongAnswer ()
-	{
-		ShowAnswerPopup (false);
-	}
-
-	private void ShowAnswerPopup (bool isCorrect)
-	{
-		answerPopupImage.enabled = true;
-		answerPopupImage.sprite = isCorrect ? correctAnswerSprite : wrongAnswerSprite;
-		HideAnswerPopup ();
-	}
-
-	private void HideAnswerPopup ()
-	{
-		StartCoroutine (HidePopupWithDelay (0.5f));
-	}
-
-	private IEnumerator HidePopupWithDelay (float delay)
-	{
-		yield return new WaitForSeconds (delay);
-		answerPopupImage.enabled = false;
 	}
 
 	#endregion
@@ -208,6 +189,11 @@ public class GameManager : MonoBehaviour
 
 	private void OnDestroy ()
 	{
+		GestrureDrawer.OnUserDrawedGesture -= delegate(List<Vector2> points) {
+			RecognizeGesture (points);
+		};
+		popup = null;
+		CharTimer.OnTimeIsOverEvent -= OnTimerEnded;
 		Resources.UnloadUnusedAssets ();
 	}
 }

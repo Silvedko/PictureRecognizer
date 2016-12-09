@@ -14,7 +14,6 @@ public class GestrureDrawer : MonoBehaviour
 	public static event GestureDrawerDelegate OnUserDrawedGesture;
 
 	GameObject thisTrailObj;
-	TrailRenderer trail;
 	Vector3 startPos;
 	Plane objPlane;
 
@@ -32,6 +31,8 @@ public class GestrureDrawer : MonoBehaviour
 			DrawFigureFromTouch ();
 	}
 
+
+	//Method checks for user actions and write points of the gesture in List<Vector2> pointsFromUser
 	void DrawFigureFromTouch ()
 	{
 		if ((Input.touchCount > 0) && Input.GetTouch (0).phase == TouchPhase.Began || Input.GetMouseButtonDown (0))
@@ -68,21 +69,9 @@ public class GestrureDrawer : MonoBehaviour
 
 	}
 
-//	Gesture[] LoadSampleGesturesFromXML ()
-//	{
-//		
-//		List<Gesture> gestures = new List<Gesture>();
-//		var assets_temp = Resources.LoadAll ("GestureSet\\NewGestures");
-//
-//		foreach (var gestureAsset in assets_temp)
-//		{
-//			gestures.Add(XMLManager.ReadGesture((TextAsset)gestureAsset));
-//		}
-//		return gestures.ToArray();
-//	}
-
-
-
-
+	void OnDestroy ()
+	{
+		OnUserDrawedGesture = null;
+	}
 
 }
